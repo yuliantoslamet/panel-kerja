@@ -539,6 +539,8 @@
   const todayStr = () => new Date().toISOString().slice(0,10);
   const dayOfMonth = () => new Date().getDate();
   const daysInMonth = () => new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
+  const API_URL = "https://script.google.com/macros/s/AKfycbzPldtudNuvV7s85zzjR8l0s4C6tPysywLfF5PB3UjFJWpfVUbM6qp4sAVdA_JCkFR3/exec";
+  const USER_NAME = "Slamet";
 
   const TASKS = [
     {id:'d1', label:'Blast Data Permintaan Brosur KEW via WA', type:'daily'},
@@ -627,12 +629,26 @@
   function isDoneToday(id){
     return !!(historyStore[todayStr()] && historyStore[todayStr()][id]);
   }
+
   function toggleTask(id){
-    if (!historyStore[todayStr()]) historyStore[todayStr()] = {};
-    historyStore[todayStr()][id] = !historyStore[todayStr()][id];
-    persistAll();
-    renderAll();
-  }
+  if (!historyStore[todayStr()]) historyStore[todayStr()] = {};
+  const newStatus = !historyStore[todayStr()][id];
+  historyStore[todayStr()][id] = newStatus;
+
+  // 🔥 KIRIM KE API
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      user: USER_NAME,
+      type: "task",
+      task: id,
+      status: newStatus ? "done" : "pending"
+    })
+  });
+
+  persistAll();
+  renderAll();
+}
 
   function fmtDate(){
     const d = new Date();
@@ -941,6 +957,15 @@
   document.getElementById('addTodayInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target.value.trim()){
       adhocToday.items.push({label: e.target.value.trim(), done: false});
+      fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+      user: USER_NAME,
+      type: "adhoc",
+      task: e.target.value.trim(),
+      status: "new"
+    })
+  });
       e.target.value = '';
       persistAll(); renderAll();
     }
@@ -966,9 +991,11 @@
     renderCalendar();
     document.getElementById('calendarModal').hidden = false;
   }
+
   function closeCalendar(){
     document.getElementById('calendarModal').hidden = true;
   }
+
   function renderCalendar(){
     const year = calViewDate.getFullYear(), month = calViewDate.getMonth();
     document.getElementById('calTitle').textContent = MONTH_NAMES[month] + ' ' + year;
@@ -1020,6 +1047,19 @@
 
   renderAll();
 })();
+
+function loadFromAPI(){
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+      console.log("DATA DARI SHEETS:", data);
+    });
+}
+
+setInterval(() => {
+  loadFromAPI();
+}, 5000);
+
 </script>
 </body>
 </html>
