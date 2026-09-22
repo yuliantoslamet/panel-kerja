@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Kerja Harian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Panel Kerja Harian</h1>
+      <p id="todayLabel"></p>
+    </div>
+    <div class="header-right">
+      <div class="stat">
+        <div class="num"><span id="doneCount">0</span>/<span id="totalCount">0</span></div>
+        <div class="lbl">tugas harian selesai</div>
+      </div>
+      <div class="daily-indicator" id="dailyIndicator" title="">
+        <div class="di-icon">📅</div>
+        <div class="di-pct" id="diPct">0%</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs-row">
+    <nav class="tabs" id="tabs">
+      <button data-tab="today" class="active">Hari Ini <span class="badge" id="badge-today" hidden></span></button>
+      <button data-tab="recurring">Rutin &amp; Berkala <span class="badge" id="badge-recurring" hidden></span></button>
+      <button data-tab="adhoc">Sewaktu-waktu &amp; Jarang <span class="badge" id="badge-adhoc" hidden></span></button>
+      <button data-tab="project">Project <span class="badge" id="badge-project" hidden></span></button>
+      <button data-tab="dashboard">Dashboard</button>
+    </nav>
+    <a class="btn-sheet" id="exportBtn" href="https://docs.google.com/spreadsheets/d/1Qx-_jylD67oicJ4DX7Rl07oIOF06pdtovjKX9PJILHc/edit?gid=0#gid=0" target="_blank" rel="noopener">
+      <span class="icon">📄</span> Rekap Spreadsheet
+    </a>
+  </div>
+
+  <div class="panel active" id="panel-today">
+    <div class="section-title">Checklist harian</div>
+    <div id="dailyList"></div>
+
+
+    <div class="section-title">Tambahan dadakan hari ini</div>
+    <div class="section-hint">Untuk tugas yang muncul mendadak hari ini saja (misal ada blast pelatihan hari ini).</div>
+    <div class="addrow">
+      <input type="text" id="addTodayInput" placeholder="Tulis tugas dadakan lalu tekan Enter...">
+    </div>
+    <div id="adhocTodayList"></div>
+  </div>
+
+  <div class="panel" id="panel-recurring">
+    <div class="section-title">2–3 hari sekali</div>
+    <div id="interval3List"></div>
+
+    <div class="section-title">Bulanan / per kegiatan</div>
+    <div class="section-hint">Checklist ini reset otomatis tiap hari — centang kalau sudah dikerjakan hari ini.</div>
+    <div id="monthlyList"></div>
+  </div>
+
+  <div class="panel" id="panel-adhoc">
+    <div class="section-title">Sewaktu-waktu &amp; kadang-kadang</div>
+    <div class="section-hint">Checklist ini juga reset otomatis tiap hari — centang kalau sudah dikerjakan hari ini.</div>
+    <div id="adhocList"></div>
+
+    <div class="section-title">Jarang / sesekali</div>
+    <div id="rareList"></div>
+
+    <details class="inactive-box">
+      <summary>Job nonaktif (tidak berjalan)</summary>
+      <div id="inactiveList" style="margin-top:10px;"></div>
+    </details>
+  </div>
+
+  <div class="panel" id="panel-project">
+    <div id="projectListView">
+      <div class="section-title">Project</div>
+      <div class="section-hint">Klik nama project untuk buka detailnya. Status akan berubah secara otomatis: Belum → Proses → Selesai.</div>
+      <div id="projectList"></div>
+      <div class="addrow">
+        <input type="text" id="addProjectInput" placeholder="Tambah project baru lalu tekan Enter...">
+      </div>
+    </div>
+    <div id="projectDetailView" style="display:none;"></div>
+  </div>
+
+  <div class="panel" id="panel-dashboard">
+    <div class="section-title" style="margin-top:0;">Dashboard Rekap</div>
+    <div class="section-hint">Rekap otomatis dari semua tugas yang sudah kamu centang.</div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="section-title">Tren 14 Hari Terakhir</div>
+    <div class="chart-card">
+      <canvas id="trendChart" height="90"></canvas>
+    </div>
+
+    <div class="section-title">Rekap per Kategori Tugas</div>
+    <div id="categoryTable"></div>
+
+    <div class="section-title">Rekap Project</div>
+    <div id="dashProjectList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="calendarModal" hidden>
+  <div class="modal-card">
+    <div class="modal-header">
+      <button class="btn ghost" id="calPrev">‹</button>
+      <div class="modal-title" id="calTitle">September 2026</div>
+      <button class="btn ghost" id="calNext">›</button>
+      <button class="btn ghost" id="calClose" style="margin-left:8px;">✕</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span><i class="dot blue"></i>90–100%</span>
+      <span><i class="dot green"></i>60–89%</span>
+      <span><i class="dot yellow"></i>20–59%</span>
+      <span><i class="dot red"></i>0–19%</span>
+    </div>
+  </div>
+</div>
+
+<div class="sync-toast" id="syncToast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
