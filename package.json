@@ -1,0 +1,10 @@
+{
+  "name": "panel-kerja-harian",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Panel Kerja Harian — checklist tugas harian/rutin/project dengan backend penyimpanan di Vercel KV.",
+  "dependencies": {
+    "@vercel/kv": "^1.0.1",
+    "googleapis": "^140.0.1"
+  }
+}
